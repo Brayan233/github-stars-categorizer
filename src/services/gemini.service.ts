@@ -2,11 +2,11 @@
  * Gemini AI service with retry logic and PostHog analytics
  */
 
-import { GoogleGenAI as PostHogGoogleGenAI } from "@posthog/ai";
 import { GoogleGenAI as NativeGoogleGenAI } from "@google/genai";
+import { GoogleGenAI as PostHogGoogleGenAI } from "@posthog/ai";
+import pRetry from "p-retry";
 import { PostHog } from "posthog-node";
 import { v4 as uuidv4 } from "uuid";
-import pRetry from "p-retry";
 import { CATEGORIES } from "../config.js";
 import { config } from "../lib/config.js";
 import { GeminiAPIError, isRetryableError } from "../lib/errors.js";

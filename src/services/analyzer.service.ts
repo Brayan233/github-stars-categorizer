@@ -42,9 +42,12 @@ export class AnalyzerService {
     totalWebSearches: 0,
   };
 
-  constructor() {
-    this.cache = new CacheService();
-    this.gemini = new GeminiService();
+  constructor(
+    gemini: GeminiService = new GeminiService(),
+    cache: CacheService = new CacheService()
+  ) {
+    this.gemini = gemini;
+    this.cache = cache;
 
     const cfg = config();
     this.queue = new PQueue({

@@ -14,7 +14,11 @@
     "clean": "rm -rf dist cache/*.json results/*.json",
     "dev": "tsx watch src/index.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "github",
@@ -42,8 +46,11 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^4.0.10",
+    "@vitest/ui": "^4.0.10",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.10"
   },
   "engines": {
     "node": ">=20.0.0"
