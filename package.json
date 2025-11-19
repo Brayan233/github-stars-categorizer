@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "tsx src/index.ts",
+    "start": "tsx src/index.tsx",
     "categorize": "tsx src/index.ts",
     "clean": "rm -rf dist cache/*.json results/*.json",
     "dev": "tsx watch src/index.ts",
@@ -34,20 +34,28 @@
   "dependencies": {
     "@google/genai": "^1.29.1",
     "@posthog/ai": "^7.1.0",
+    "boxen": "^8.0.1",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "execa": "^9.5.2",
+    "ink": "^6.5.0",
+    "ink-spinner": "^5.0.0",
+    "meow": "^14.0.0",
+    "ora": "^9.0.0",
     "p-queue": "^8.1.1",
     "p-retry": "^6.2.1",
     "posthog-node": "^5.11.2",
+    "react": "^19.2.0",
     "uuid": "^13.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "@types/react": "^19.2.6",
     "@vitest/coverage-v8": "^4.0.10",
     "@vitest/ui": "^4.0.10",
+    "ink-testing-library": "^4.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^4.0.10"

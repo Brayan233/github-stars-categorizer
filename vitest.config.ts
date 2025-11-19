@@ -30,7 +30,7 @@ export default defineConfig({
     },
     
     // Test file patterns
-    include: ['src/**/*.{test,spec}.ts'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
     
     // Timeout for async tests (10 seconds)
     testTimeout: 10000,
