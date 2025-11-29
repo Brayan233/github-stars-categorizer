@@ -4,35 +4,44 @@ on:
   schedule:
     # Run daily at 2 AM UTC
     - cron: '0 2 * * *'
+  
+  # Trigger on pushes to main branch
+  push:
+    branches:
+      - main
 
-  # Allow manual trigger
+  # Allow manual trigger (only on main)
   workflow_dispatch:
 
 jobs:
   categorize:
     runs-on: ubuntu-latest
+    environment: production
+    
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install
-        working-directory: toolbox/github-stars-categorizer
 
       - name: Build project
         run: pnpm build
-        working-directory: toolbox/github-stars-categorizer
 
       - name: Categorize starred repositories
         env:
@@ -41,4 +50,3 @@ jobs:
           POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm categorize
-        working-directory: toolbox/github-stars-categorizer
