@@ -69,17 +69,21 @@ export class AnalyzerService {
     const results: AnalysisResult[] = [];
     let completed = 0;
 
+    console.log(`Starting analysis for ${repos.length} repositories with concurrency ${this.queue.concurrency}`);
+
     // Process all repos in parallel with queue managing concurrency
     await Promise.all(
       repos.map(async (repo) => {
         const result = await this.queue.add(async () => {
           const startTime = Date.now();
+          // console.log(`[${repo.full_name}] Processing started`);
 
           try {
             // Check cache first
             if (!skipCache) {
               const cached = await this.cache.getAnalysis(repo.full_name);
               if (cached) {
+                // console.log(`[${repo.full_name}] Cache hit`);
                 this.stats.cached++;
                 completed++;
                 onProgress?.({
@@ -94,9 +98,12 @@ export class AnalyzerService {
               }
             }
 
+            console.log(`[${repo.full_name}] Analyzing with Gemini...`);
             // Analyze with Gemini
             const { categorization, groundingChunks, tokensUsed } =
               await this.gemini.categorize(repo);
+            
+            console.log(`[${repo.full_name}] Analysis complete`);
 
             this.stats.analyzed++;
             this.stats.totalTokens += tokensUsed;
@@ -129,6 +136,7 @@ export class AnalyzerService {
 
             return result;
           } catch (error) {
+            console.error(`[${repo.full_name}] Failed:`, error);
             this.stats.failed++;
             const errorMsg = getErrorMessage(error);
 
