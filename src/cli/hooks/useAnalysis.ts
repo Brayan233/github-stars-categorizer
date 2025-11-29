@@ -106,6 +106,7 @@ export function useAnalysis(flags: AnalysisFlags) {
         const stats = analyzer.getStats();
 
         // Phase 3: Generate reports
+        console.log('Phase 3: Generating reports...');
         setState(prev => ({ ...prev, phase: 'reporting' }));
         
         const report = reporter.generateReport(results, stats);
@@ -114,6 +115,7 @@ export function useAnalysis(flags: AnalysisFlags) {
 
         // Phase 4: Sync to GitHub (if not dry-run)
         if (!flags.dryRun) {
+          console.log('Phase 4: Syncing to GitHub...');
           setState(prev => ({ ...prev, phase: 'syncing' }));
           
           if (!flags.keepLists) {
