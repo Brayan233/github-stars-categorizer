@@ -111,6 +111,7 @@ export class GitHubService {
   }
 
   private async deleteList(listId: string): Promise<void> {
+    try {
       await this.graphqlMutation(
         `mutation DeleteList($id: ID!) {
           deleteUserList(input: { listId: $id }) {
