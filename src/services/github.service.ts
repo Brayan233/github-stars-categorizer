@@ -118,6 +118,7 @@ export class GitHubService {
   }
 
   async createLists(): Promise<GitHubList[]> {
+    console.log(`Creating ${CATEGORIES.length} GitHub lists...`);
     // Create lists in parallel with rate limiting
     const lists = await Promise.all(
       CATEGORIES.map((category) =>
@@ -125,6 +126,8 @@ export class GitHubService {
       )
     );
 
+    const createdCount = lists.filter((l) => l !== null).length;
+    console.log(`Successfully created/verified ${createdCount} lists`);
     return lists.filter((list): list is GitHubList => list !== null);
   }
 
@@ -134,6 +137,7 @@ export class GitHubService {
     description: string
   ): Promise<GitHubList | null> {
     const fullName = `${emoji} ${name}`;
+    // console.log(`Creating list: ${fullName}`);
 
     const result = await this.graphqlMutation(
       `mutation CreateList($name: String!, $description: String!) {
@@ -158,6 +162,7 @@ export class GitHubService {
   ): Promise<void> {
     // Filter successful results
     const successfulResults = results.filter((r) => !r.failed);
+    console.log(`Assigning ${successfulResults.length} repositories to lists...`);
 
     // Create category to list ID mapping
     const categoryToListId = new Map<string, string>();
@@ -182,16 +187,21 @@ export class GitHubService {
       batches.push(assignments.slice(i, i + BATCH_SIZE));
     }
 
+    console.log(`Processing ${batches.length} batches of assignments...`);
+
     // Process batches with rate limiting
     await Promise.all(
-      batches.map((batch) =>
+      batches.map((batch, index) =>
         this.queue.add(async () => {
+          // console.log(`Processing batch ${index + 1}/${batches.length}`);
           await this.assignReposBatch(batch);
           completed += batch.length;
           onProgress?.(completed, total);
         })
       )
     );
+    
+    console.log('All repositories assigned successfully');
   }
 
   private async assignReposBatch(
