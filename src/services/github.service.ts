@@ -37,13 +37,22 @@ export class GitHubService {
 
   async fetchStarredRepos(): Promise<GitHubRepo[]> {
     try {
-      const { stdout } = await execa("gh", [
+      console.log('Executing gh CLI command to fetch starred repos...');
+      
+      const result = await execa("gh", [
         "api",
         "user/starred",
         "--paginate",
         "--jq",
         ".[] | {full_name, node_id, description, language, topics, html_url}",
-      ]);
+      ], {
+        timeout: 60000, // 60 second timeout
+      });
+
+      console.log('gh CLI command completed successfully');
+      console.log(`stderr: ${result.stderr || 'none'}`);
+      
+      const { stdout } = result;
 
       // Parse JSONL (each line is a JSON object)
       const repos: GitHubRepo[] = stdout
@@ -51,8 +60,15 @@ export class GitHubService {
         .filter((line) => line.trim())
         .map((line) => JSON.parse(line));
 
+      console.log(`Successfully parsed ${repos.length} repositories`);
       return repos;
     } catch (error) {
+      console.error('Error fetching starred repositories:');
+      console.error('Error details:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
       throw new GitHubAPIError("Failed to fetch starred repositories", undefined, error);
     }
   }
