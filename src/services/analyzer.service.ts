@@ -98,12 +98,9 @@ export class AnalyzerService {
               }
             }
 
-            console.log(`[${repo.full_name}] Analyzing with Gemini...`);
             // Analyze with Gemini
             const { categorization, groundingChunks, tokensUsed } =
               await this.gemini.categorize(repo);
-            
-            console.log(`[${repo.full_name}] Analysis complete`);
 
             this.stats.analyzed++;
             this.stats.totalTokens += tokensUsed;
@@ -133,6 +130,10 @@ export class AnalyzerService {
               elapsedMs,
               tokensUsed,
             });
+
+            if (completed % 10 === 0 || completed === this.stats.total) {
+              console.log(`Progress: ${completed}/${this.stats.total} repositories analyzed`);
+            }
 
             return result;
           } catch (error) {

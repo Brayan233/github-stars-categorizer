@@ -20,30 +20,6 @@ export class GitHubService {
     });
   }
 
-  async verifyTokenScopes(): Promise<void> {
-    try {
-      console.log('Verifying GitHub token scopes...');
-      const { stdout } = await execa("gh", [
-        "api",
-        "/",
-        "--include",
-        "--silent"
-      ]);
-      
-      const scopesMatch = stdout.match(/x-oauth-scopes:\s*(.*)/i);
-      if (scopesMatch) {
-        console.log(`Current Token Scopes: ${scopesMatch[1]}`);
-        if (!scopesMatch[1].includes('user')) {
-          console.warn('WARNING: Token does not appear to have the "user" scope. List management may fail.');
-        }
-      } else {
-        console.log('Could not determine token scopes from headers.');
-      }
-    } catch (error) {
-      console.error('Failed to verify token scopes:', error);
-    }
-  }
-
   async getUsername(): Promise<string> {
     try {
       const { stdout } = await execa("gh", [
@@ -60,7 +36,6 @@ export class GitHubService {
   }
 
   async fetchStarredRepos(): Promise<GitHubRepo[]> {
-    await this.verifyTokenScopes();
     try {
       console.log('Executing gh CLI command to fetch starred repos...');
       
@@ -136,8 +111,6 @@ export class GitHubService {
   }
 
   private async deleteList(listId: string): Promise<void> {
-    console.log(`Deleting list ${listId}...`);
-    try {
       await this.graphqlMutation(
         `mutation DeleteList($id: ID!) {
           deleteUserList(input: { listId: $id }) {
@@ -146,12 +119,8 @@ export class GitHubService {
         }`,
         { id: listId }
       );
-      console.log(`Deleted list ${listId}`);
     } catch (error) {
       console.error(`Failed to delete list ${listId}:`, error);
-      if (error instanceof Error && error.message.includes("Resource not accessible by personal access token")) {
-        console.error("HINT: This error usually means your GH_PAT is missing the 'user' scope (for Classic PATs) or the necessary permissions for managing User Lists.");
-      }
       throw error;
     }
   }
