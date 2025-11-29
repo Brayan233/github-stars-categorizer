@@ -191,7 +191,7 @@ export class GitHubService {
 
     // Process batches with rate limiting
     await Promise.all(
-      batches.map((batch, index) =>
+      batches.map((batch) =>
         this.queue.add(async () => {
           // console.log(`Processing batch ${index + 1}/${batches.length}`);
           await this.assignReposBatch(batch);
