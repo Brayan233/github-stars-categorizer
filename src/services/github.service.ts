@@ -111,14 +111,21 @@ export class GitHubService {
   }
 
   private async deleteList(listId: string): Promise<void> {
-    await this.graphqlMutation(
-      `mutation DeleteList($id: ID!) {
-        deleteUserList(input: { listId: $id }) {
-          clientMutationId
-        }
-      }`,
-      { id: listId }
-    );
+    console.log(`Deleting list ${listId}...`);
+    try {
+      await this.graphqlMutation(
+        `mutation DeleteList($id: ID!) {
+          deleteUserList(input: { listId: $id }) {
+            clientMutationId
+          }
+        }`,
+        { id: listId }
+      );
+      console.log(`Deleted list ${listId}`);
+    } catch (error) {
+      console.error(`Failed to delete list ${listId}:`, error);
+      throw error;
+    }
   }
 
   async createLists(): Promise<GitHubList[]> {
@@ -242,6 +249,7 @@ export class GitHubService {
         variables,
       };
 
+      // console.log('Executing GraphQL mutation...');
       const { stdout } = await execa("gh", [
         "api",
         "graphql",
@@ -249,10 +257,12 @@ export class GitHubService {
         "-",
       ], {
         input: JSON.stringify(payload),
+        timeout: 30000, // 30 second timeout
       });
 
       return JSON.parse(stdout);
     } catch (error) {
+      console.error('GraphQL mutation failed:', error);
       throw new GitHubAPIError("GraphQL mutation failed", undefined, error);
     }
   }
