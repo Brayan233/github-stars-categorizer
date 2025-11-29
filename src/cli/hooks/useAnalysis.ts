@@ -53,6 +53,7 @@ export function useAnalysis(flags: AnalysisFlags) {
         const reporter = new ReporterService();
 
         // Phase 1: Fetch repositories
+        console.log('Phase 1: Fetching repositories');
         setState(prev => ({ ...prev, phase: 'fetching' }));
         
         let repos = await cache.getStarredRepos();
@@ -60,12 +61,17 @@ export function useAnalysis(flags: AnalysisFlags) {
         
         if (!repos || flags.skipCache) {
           fetchedFromGitHub = true;
+          console.log('Fetching from GitHub API...');
           repos = await github.fetchStarredRepos();
           await cache.saveStarredRepos(repos);
+        } else {
+          console.log('Using cached repositories');
         }
 
         // Apply limit if specified
         const reposToProcess = flags.limit ? repos.slice(0, flags.limit) : repos;
+        
+        console.log(`Processing ${reposToProcess.length} repositories`);
         
         setState(prev => ({
           ...prev,

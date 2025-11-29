@@ -96,8 +96,18 @@ if (cli.flags.fast) {
   process.env.GEMINI_MODEL = cli.flags.model;
 }
 
+// Debug: log environment
+if (process.env.CI) {
+  console.log('🔧 Running in CI environment');
+}
+
+console.log('🚀 Starting categorization...');
+
 // Render the Ink app
-const { waitUntilExit } = render(<App flags={cli.flags} />);
+const { waitUntilExit } = render(<App flags={cli.flags} />, {
+  // Ensure output works in CI environments
+  patchConsole: false,
+});
 
 // Wait for the app to exit and set proper exit code
 waitUntilExit()
