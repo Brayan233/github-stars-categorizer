@@ -90,12 +90,15 @@ export class GitHubService {
   }
 
   async clearAllLists(): Promise<number> {
+    console.log('Fetching existing lists to clear...');
     const lists = await this.getAllLists();
+    console.log(`Found ${lists.length} lists to clear`);
 
     if (lists.length === 0) {
       return 0;
     }
 
+    console.log('Deleting lists...');
     // Delete lists in parallel with rate limiting
     await Promise.all(
       lists.map((list) =>
@@ -103,6 +106,7 @@ export class GitHubService {
       )
     );
 
+    console.log('All lists cleared successfully');
     return lists.length;
   }
 
