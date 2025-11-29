@@ -10,9 +10,9 @@
   "scripts": {
     "build": "tsc",
     "start": "tsx src/index.tsx",
-    "categorize": "tsx src/index.ts",
+    "categorize": "tsx src/index.tsx",
     "clean": "rm -rf dist cache/*.json results/*.json",
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/index.tsx",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "test": "vitest run",
