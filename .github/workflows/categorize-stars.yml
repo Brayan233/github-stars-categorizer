@@ -47,6 +47,6 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
-          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+          POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm categorize
