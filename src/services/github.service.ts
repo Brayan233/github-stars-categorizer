@@ -22,12 +22,7 @@ export class GitHubService {
 
   async getUsername(): Promise<string> {
     try {
-      const { stdout } = await execa("gh", [
-        "api",
-        "user",
-        "--jq",
-        ".login",
-      ]);
+      const { stdout } = await execa("gh", ["api", "user", "--jq", ".login"]);
 
       return stdout.trim();
     } catch (error) {
@@ -37,21 +32,25 @@ export class GitHubService {
 
   async fetchStarredRepos(): Promise<GitHubRepo[]> {
     try {
-      console.log('Executing gh CLI command to fetch starred repos...');
-      
-      const result = await execa("gh", [
-        "api",
-        "user/starred",
-        "--paginate",
-        "--jq",
-        ".[] | {full_name, node_id, description, language, topics, html_url}",
-      ], {
-        timeout: 60000, // 60 second timeout
-      });
+      console.log("Executing gh CLI command to fetch starred repos...");
 
-      console.log('gh CLI command completed successfully');
-      console.log(`stderr: ${result.stderr || 'none'}`);
-      
+      const result = await execa(
+        "gh",
+        [
+          "api",
+          "user/starred",
+          "--paginate",
+          "--jq",
+          ".[] | {full_name, node_id, description, language, topics, html_url}",
+        ],
+        {
+          timeout: 60000, // 60 second timeout
+        }
+      );
+
+      console.log("gh CLI command completed successfully");
+      console.log(`stderr: ${result.stderr || "none"}`);
+
       const { stdout } = result;
 
       // Parse JSONL (each line is a JSON object)
@@ -63,13 +62,17 @@ export class GitHubService {
       console.log(`Successfully parsed ${repos.length} repositories`);
       return repos;
     } catch (error) {
-      console.error('Error fetching starred repositories:');
-      console.error('Error details:', error);
+      console.error("Error fetching starred repositories:");
+      console.error("Error details:", error);
       if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
       }
-      throw new GitHubAPIError("Failed to fetch starred repositories", undefined, error);
+      throw new GitHubAPIError(
+        "Failed to fetch starred repositories",
+        undefined,
+        error
+      );
     }
   }
 
@@ -85,12 +88,16 @@ export class GitHubService {
       const result = JSON.parse(stdout);
       return result.data?.viewer?.lists?.nodes || [];
     } catch (error) {
-      throw new GitHubAPIError("Failed to fetch GitHub Lists", undefined, error);
+      throw new GitHubAPIError(
+        "Failed to fetch GitHub Lists",
+        undefined,
+        error
+      );
     }
   }
 
   async clearAllLists(): Promise<number> {
-    console.log('Fetching existing lists to clear...');
+    console.log("Fetching existing lists to clear...");
     const lists = await this.getAllLists();
     console.log(`Found ${lists.length} lists to clear`);
 
@@ -98,15 +105,13 @@ export class GitHubService {
       return 0;
     }
 
-    console.log('Deleting lists...');
+    console.log("Deleting lists...");
     // Delete lists in parallel with rate limiting
     await Promise.all(
-      lists.map((list) =>
-        this.queue.add(() => this.deleteList(list.id))
-      )
+      lists.map((list) => this.queue.add(() => this.deleteList(list.id)))
     );
 
-    console.log('All lists cleared successfully');
+    console.log("All lists cleared successfully");
     return lists.length;
   }
 
@@ -131,7 +136,9 @@ export class GitHubService {
     // Create lists in parallel with rate limiting
     const lists = await Promise.all(
       CATEGORIES.map((category) =>
-        this.queue.add(() => this.createList(category.emoji, category.name, category.description))
+        this.queue.add(() =>
+          this.createList(category.emoji, category.name, category.description)
+        )
       )
     );
 
@@ -148,7 +155,7 @@ export class GitHubService {
     const fullName = `${emoji} ${name}`;
     // console.log(`Creating list: ${fullName}`);
 
-    const result = await this.graphqlMutation(
+    const result = (await this.graphqlMutation(
       `mutation CreateList($name: String!, $description: String!) {
         createUserList(input: { name: $name, description: $description, isPrivate: false }) {
           list {
@@ -159,7 +166,7 @@ export class GitHubService {
         }
       }`,
       { name: fullName, description }
-    ) as { data?: { createUserList?: { list?: GitHubList } } };
+    )) as { data?: { createUserList?: { list?: GitHubList } } };
 
     return result.data?.createUserList?.list || null;
   }
@@ -171,7 +178,9 @@ export class GitHubService {
   ): Promise<void> {
     // Filter successful results
     const successfulResults = results.filter((r) => !r.failed);
-    console.log(`Assigning ${successfulResults.length} repositories to lists...`);
+    console.log(
+      `Assigning ${successfulResults.length} repositories to lists...`
+    );
 
     // Create category to list ID mapping
     const categoryToListId = new Map<string, string>();
@@ -181,17 +190,21 @@ export class GitHubService {
     }
 
     // Group by category
-    const assignments = successfulResults.map((result) => ({
-      listId: categoryToListId.get(result.categorization.category),
-      nodeId: result.repo.node_id,
-    })).filter((a): a is { listId: string; nodeId: string } => a.listId !== undefined);
+    const assignments = successfulResults
+      .map((result) => ({
+        listId: categoryToListId.get(result.categorization.category),
+        nodeId: result.repo.node_id,
+      }))
+      .filter(
+        (a): a is { listId: string; nodeId: string } => a.listId !== undefined
+      );
 
     const total = assignments.length;
     let completed = 0;
 
     // Batch assignments: 10 repos per GraphQL request (to avoid hitting payload limits)
     const BATCH_SIZE = 10;
-    const batches: typeof assignments[] = [];
+    const batches: (typeof assignments)[] = [];
     for (let i = 0; i < assignments.length; i += BATCH_SIZE) {
       batches.push(assignments.slice(i, i + BATCH_SIZE));
     }
@@ -209,8 +222,8 @@ export class GitHubService {
         })
       )
     );
-    
-    console.log('All repositories assigned successfully');
+
+    console.log("All repositories assigned successfully");
   }
 
   private async assignReposBatch(
@@ -241,27 +254,65 @@ export class GitHubService {
     mutation: string,
     variables: Record<string, unknown>
   ): Promise<unknown> {
-    try {
-      const payload = {
-        query: mutation,
-        variables,
-      };
+    const payload = {
+      query: mutation,
+      variables,
+    };
 
-      // console.log('Executing GraphQL mutation...');
-      const { stdout } = await execa("gh", [
-        "api",
-        "graphql",
-        "--input",
-        "-",
-      ], {
-        input: JSON.stringify(payload),
-        timeout: 30000, // 30 second timeout
-      });
+    // Retry/backoff settings
+    const maxRetries = 5;
+    let attempt = 0;
 
-      return JSON.parse(stdout);
-    } catch (error) {
-      console.error('GraphQL mutation failed:', error);
-      throw new GitHubAPIError("GraphQL mutation failed", undefined, error);
+    while (true) {
+      try {
+        const { stdout } = await execa(
+          "gh",
+          ["api", "graphql", "--input", "-"],
+          {
+            input: JSON.stringify(payload),
+            timeout: 30000, // 30 second timeout
+          }
+        );
+
+        return JSON.parse(stdout);
+      } catch (error) {
+        attempt += 1;
+
+        // extract possible error text from execa Error
+        const stderr = (error as any)?.stderr ?? "";
+        const stdout = (error as any)?.stdout ?? "";
+        const message = (error as any)?.message ?? "";
+
+        const combined = `${stderr} ${stdout} ${message}`;
+
+        // Detect GitHub secondary rate limit (common gh CLI message) or HTTP 403
+        const isSecondaryRateLimit =
+          /secondary rate limit/i.test(combined) || /HTTP 403/i.test(combined);
+
+        // Treat common transient network or server errors as retryable as well
+        const isTransient =
+          isSecondaryRateLimit ||
+          /ECONNRESET|ETIMEDOUT|ENOTFOUND|ECONNREFUSED|502|503|504|timeout/i.test(
+            combined
+          );
+
+        if (attempt <= maxRetries && isTransient) {
+          // exponential backoff + jitter
+          const backoffBase = 200; // ms
+          const delay = Math.min(
+            30_000,
+            Math.pow(2, attempt) * backoffBase + Math.floor(Math.random() * 300)
+          );
+          console.warn(
+            `GraphQL mutation failed (attempt ${attempt}/${maxRetries}). Retrying in ${delay}ms...`
+          );
+          await new Promise((res) => setTimeout(res, delay));
+          continue;
+        }
+
+        console.error("GraphQL mutation failed:", error);
+        throw new GitHubAPIError("GraphQL mutation failed", undefined, error);
+      }
     }
   }
 }
